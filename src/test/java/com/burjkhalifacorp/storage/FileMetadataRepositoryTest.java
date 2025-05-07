@@ -145,7 +145,6 @@ public class FileMetadataRepositoryTest {
         assertEquals(4, tags1and2Files.getTotalElements());
     }
 
-    @Disabled
     @Test
     void testSaveSameName() {
         FileMetadata file1 = mkRandFile(userId1, Visibility.PUBLIC, tags1);
@@ -165,7 +164,6 @@ public class FileMetadataRepositoryTest {
         });
     }
 
-    @Disabled
     @Test
     void testSaveSameHash() {
         FileMetadata file1 = mkRandFile(userId1, Visibility.PUBLIC, tags1);
