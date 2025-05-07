@@ -1,0 +1,39 @@
+services:
+  mongo:
+    image: mongo:5.0
+    container_name: st_mongodb
+    ports:
+      - $STORAGE_MONGO_PORT:27017
+
+  minio:
+    image: minio/minio
+    container_name: st_minio
+    ports:
+      - $STORAGE_MINIO_PORT:9000
+    environment:
+      MINIO_ROOT_USER: minio_user
+      MINIO_ROOT_PASSWORD: minio_password
+    command: server /data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - minio-data:/data
+
+  storage-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: storage-service
+    mem_limit: 1gb
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+      - minio
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/storage_db
+
+volumes:
+  minio-data:

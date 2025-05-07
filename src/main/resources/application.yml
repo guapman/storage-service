@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: storage
+  data:
+    mongodb:
+      database: storage_db
+      uri: mongodb://localhost:27017/storage_db
+      auto-index-creation: true
+  servlet:
+    multipart:
+      enabled: false
+
+server:
+  shutdown: graceful
+  port: 8080
+  tomcat:
+    max-swallow-size: -1
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minio_user
+  secret-key: minio_password
+  bucket: storage_files

@@ -1,0 +1,11 @@
+spring:
+  data:
+    mongodb:
+      database: test_storage_db
+      uri: mongodb://localhost:27018/storage_db
+
+minio:
+  bucket: test_storage_files
+  endpoint: http://localhost:9001
+  access-key: test_minio_user
+  secret-key: test_minio_password

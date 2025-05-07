@@ -1,0 +1,23 @@
+name: Test app
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 17, 21 ]
+    name: Run tests on Java ${{ matrix.java }}
+    steps:
+      - uses: actions/checkout@master
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+      - run: mvn --batch-mode --update-snapshots verify
+
