@@ -3,6 +3,7 @@ spring:
     mongodb:
       database: test_storage_db
       uri: mongodb://localhost:27018/storage_db
+      auto-index-creation: true
 
 minio:
   bucket: test_storage_files
