@@ -1,6 +1,7 @@
 package com.burjkhalifacorp.storage;
 
 import com.burjkhalifacorp.storage.persist.FileMetadataRepository;
+import com.burjkhalifacorp.storage.service.FileServiceImpl;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -15,7 +16,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @Tag("integration")
 class StorageApplicationTests {
 	@MockitoBean
-	private FileMetadataRepository repository;
+	private FileServiceImpl fileServiceMock;
+	@MockitoBean
+	private FileMetadataRepository repositoryMock;
 
 	@Test
 	void contextLoads() {

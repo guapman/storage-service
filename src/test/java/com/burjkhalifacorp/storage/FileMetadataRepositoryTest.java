@@ -5,99 +5,46 @@ import com.burjkhalifacorp.storage.persist.FileMetadataRepository;
 import com.burjkhalifacorp.storage.persist.models.FileMetadata;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.ComposeContainer;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.springframework.dao.DuplicateKeyException;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
-import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
-import java.util.HexFormat;
-import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
-import java.security.MessageDigest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-@SpringBootTest
+@Testcontainers
+@DataMongoTest
 @ActiveProfiles("test")
 @Tag("integration")
-public class FileMetadataRepositoryTest {
-
-    private final String userId1 = "bob";
-    private final String userId2 = "roman";
-    private final String userId3 = "alice";
-    private final Set<String> tags1 = Set.of("movie", "scuba", "ocean");
-    private final Set<String> tags2 = Set.of("photo");
-
+public class FileMetadataRepositoryTest extends TestBase {
     @Autowired
     private FileMetadataRepository repository;
 
-    private static ComposeContainer env;
-
-    @BeforeAll
-    static void setUpEnv() {
-        env = new ComposeContainer(new File("docker-compose-tests.yml"))
-                .withExposedService("mongo", 27017, Wait.forListeningPort());
-        env.start();
-    }
-
-    @AfterAll
-    static void tearDown() {
-        env.stop();
-    }
+    @Container
+    private static ComposeContainer env = new ComposeContainer(new File("docker-compose-tests.yml"))
+            .withExposedService("mongo", 27017, Wait.forListeningPort());
 
     @BeforeEach
     void setUp() {
         repository.deleteAll();
     }
 
-    private FileMetadata mkRandFile(
-            String ownerId,
-            Visibility visibility,
-            Set<String> tags
-    ) {
-        Random random = new Random();
-
-        byte[] randomBytes = new byte[32];
-        random.nextBytes(randomBytes);
-        MessageDigest digest;
-
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException ex) {
-            return null;
-        }
-
-        byte[] hashBytes = digest.digest(randomBytes);
-        String hashHex = HexFormat.of().formatHex(hashBytes);
-
-        FileMetadata file = new FileMetadata();
-        file.setExternalId(UUID.randomUUID());
-        file.setFilename("file_%d.dat".formatted(random.nextInt()));
-        file.setHash(hashHex);
-        file.setSize(random.nextInt(10000));
-        file.setContentType("application/octet-stream");
-        file.setVisibility(visibility);
-        file.setOwnerId(ownerId);
-        file.setTags(tags);
-        file.setUploadDate(LocalDateTime.now());
-        return file;
-    }
-
     @Test
     void testSaveAndFindByOwnerId() {
-        FileMetadata file1 = mkRandFile(userId1, Visibility.PRIVATE, tags1);
-        FileMetadata file2 = mkRandFile(userId1, Visibility.PUBLIC, tags2);
-        FileMetadata file3 = mkRandFile(userId2, Visibility.PUBLIC, tags1);
+        FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PRIVATE, tags1);
+        FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
+        FileMetadata file3 = mkRandomFileMetadata(userId2, Visibility.PUBLIC, tags1);
 
         repository.insert(file1);
         repository.insert(file2);
@@ -118,11 +65,11 @@ public class FileMetadataRepositoryTest {
 
     @Test
     void testSaveAndFindPublic() {
-        FileMetadata file1 = mkRandFile(userId1, Visibility.PUBLIC, tags1);
-        FileMetadata file2 = mkRandFile(userId1, Visibility.PUBLIC, tags2);
-        FileMetadata file3 = mkRandFile(userId2, Visibility.PUBLIC, tags1);
-        FileMetadata file4 = mkRandFile(userId2, Visibility.PUBLIC, tags1);
-        FileMetadata file_private = mkRandFile(userId2, Visibility.PRIVATE, tags1);
+        FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags1);
+        FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
+        FileMetadata file3 = mkRandomFileMetadata(userId2, Visibility.PUBLIC, tags1);
+        FileMetadata file4 = mkRandomFileMetadata(userId2, Visibility.PUBLIC, tags1);
+        FileMetadata file_private = mkRandomFileMetadata(userId2, Visibility.PRIVATE, tags1);
 
         repository.insert(file1);
         repository.insert(file2);
@@ -147,10 +94,10 @@ public class FileMetadataRepositoryTest {
 
     @Test
     void testSaveSameName() {
-        FileMetadata file1 = mkRandFile(userId1, Visibility.PUBLIC, tags1);
-        FileMetadata file2 = mkRandFile(userId1, Visibility.PUBLIC, tags2);
+        FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags1);
+        FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
         // another user
-        FileMetadata file3 = mkRandFile(userId2, Visibility.PUBLIC, tags2);
+        FileMetadata file3 = mkRandomFileMetadata(userId2, Visibility.PUBLIC, tags2);
 
         file2.setFilename(file1.getFilename());
         file3.setFilename(file1.getFilename());
@@ -166,10 +113,10 @@ public class FileMetadataRepositoryTest {
 
     @Test
     void testSaveSameHash() {
-        FileMetadata file1 = mkRandFile(userId1, Visibility.PUBLIC, tags1);
-        FileMetadata file2 = mkRandFile(userId1, Visibility.PUBLIC, tags2);
+        FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags1);
+        FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
         // another user
-        FileMetadata file3 = mkRandFile(userId2, Visibility.PUBLIC, tags2);
+        FileMetadata file3 = mkRandomFileMetadata(userId2, Visibility.PUBLIC, tags2);
 
         file2.setHash(file1.getHash());
         file3.setHash(file1.getHash());
@@ -181,5 +128,23 @@ public class FileMetadataRepositoryTest {
         assertDoesNotThrow(() -> {
             repository.insert(file3);
         });
+    }
+
+    @Test
+    void testTagSorting() {
+        FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, Set.of("tag_1", "tag_3"));
+        FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, Set.of("tag_2"));
+        FileMetadata file3 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, Set.of("tag_3", "tag_1"));
+        repository.insert(file1);
+        repository.insert(file2);
+        repository.insert(file3);
+
+        PageRequest pageReqDesc = PageRequest.of(0, 20, Sort.by("tags").descending());
+        Page<FileMetadata> resultDesc = repository.findByOwnerId(userId1, pageReqDesc);
+        assertEquals(file3, resultDesc.iterator().next());
+
+        PageRequest pageReqAsc = PageRequest.of(0, 20, Sort.by("tags").ascending());
+        Page<FileMetadata> resultAsc = repository.findByOwnerId(userId1, pageReqAsc);
+        assertEquals(file1, resultAsc.iterator().next());
     }
 }

@@ -2,24 +2,24 @@ package com.burjkhalifacorp.storage.persist.models;
 
 import com.burjkhalifacorp.storage.common.Visibility;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
-@Getter
-@Setter
 @Document(collection = "files_metadata")
 @CompoundIndex(name = "owner_id_filename_unique_idx", def = "{'ownerId': 1, 'filename': 1}", unique = true)
 @CompoundIndex(name = "owner_id_hash_unique_idx", def = "{'ownerId': 1, 'hash': 1}", unique = true)
+@Data
 public class FileMetadata {
     @Id
     private String id;
@@ -35,7 +35,7 @@ public class FileMetadata {
     private String hash;
 
     @Indexed
-    private Set<String> tags = new TreeSet<>();
+    private List<String> tags;
 
     private long size;
 
@@ -44,5 +44,9 @@ public class FileMetadata {
     @NotEmpty(message = "contentType must not be empty")
     private String contentType;
 
-    private LocalDateTime uploadDate;
+    private Instant uploadDate;
+
+    public void setTags(Set<String> tags) {
+        this.tags = new ArrayList<>(new TreeSet<>(tags)); // sort tags
+    }
 }

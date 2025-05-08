@@ -1,20 +1,24 @@
 package com.burjkhalifacorp.storage.api.controller;
 
+import com.burjkhalifacorp.storage.api.models.ErrorResponse;
 import com.burjkhalifacorp.storage.errors.NotImplementedException;
+import com.burjkhalifacorp.storage.errors.StorageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
 
 @ControllerAdvice
 public class ApiExceptionHandler {
-    @ExceptionHandler(NotImplementedException.class)
-    public ResponseEntity<String> handleNotImplemented(NotImplementedException ex) {
+    @ExceptionHandler(StorageException.class)
+    @ResponseBody
+    public ResponseEntity<ErrorResponse> handleStorageExceptions(StorageException ex) {
         return ResponseEntity
-                .status(HttpStatus.NOT_IMPLEMENTED)
-                .body(ex.getMessage());
+                .status(ex.getStatusCode())
+                .body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler({IOException.class, RuntimeException.class})

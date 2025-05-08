@@ -6,7 +6,7 @@ spring:
       auto-index-creation: true
 
 minio:
-  bucket: test_storage_files
+  bucket: test-storage-files
   endpoint: http://localhost:9001
   access-key: test_minio_user
   secret-key: test_minio_password
