@@ -12,10 +12,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-public class TestBase {
+public abstract class TestBase {
     protected final String userId1 = "Bob";
     protected final String userId2 = "Roman";
     protected final String userId3 = "Alice";
+    protected final String hackerId = "DarthVader";
     protected final Set<String> tags1 = Set.of("scuba", "ocean", "movie");
     protected final Set<String> tags2 = Set.of("photo");
 

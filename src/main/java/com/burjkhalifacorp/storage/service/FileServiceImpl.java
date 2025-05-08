@@ -169,9 +169,14 @@ public class FileServiceImpl implements FileService {
     public FileMetadataDto renameFile(String userId, UUID fileId, String newFilename) throws StorageException {
         FileMetadata metadata = getFileMetadataWithAccessCheck(userId, fileId);
 
-        if(metadata.getFilename().equals(newFilename)) {
+        if(!metadata.getFilename().equals(newFilename)) {
             metadata.setFilename(newFilename);
-            fileRepository.save(metadata);
+            try {
+                fileRepository.save(metadata);
+            } catch (DuplicateKeyException ex) {
+                log.warn("file with the same name already exist {}", newFilename);
+                throw new FileDuplicatedException();
+            }
         }
 
         return fileMetadataMapper.toDto(metadata);
@@ -235,14 +240,18 @@ public class FileServiceImpl implements FileService {
             // user provided type has priority as mentioned in req
             MimeType mimetype = MimeTypes.getDefaultMimeTypes()
                     .forName(contentTypeFromUser);
-            return mimetype.toString();
-        } catch (MimeTypeException ex) {
-            log.warn("got unknown content type from user {}, will detect internally", contentTypeFromUser);
-            String detectedType = tika.detect(fileHeader);
-            if(detectedType != null && !detectedType.isEmpty()) {
-                return detectedType;
+            if(!mimetype.toString().equals(DEFAULT_TYPE)) {
+                return mimetype.toString();
             }
+        } catch (MimeTypeException ex) {
         }
+
+        log.warn("got unknown content type from user {}, will detect internally", contentTypeFromUser);
+        String detectedType = tika.detect(fileHeader);
+        if(detectedType != null && !detectedType.isEmpty()) {
+            return detectedType;
+        }
+
         log.warn("default content type will be used");
         // default, if nothing found
         return DEFAULT_TYPE;

@@ -7,9 +7,13 @@ import com.burjkhalifacorp.storage.common.Visibility;
 import com.burjkhalifacorp.storage.errors.BadRequestException;
 import com.burjkhalifacorp.storage.service.FileService;
 import com.burjkhalifacorp.storage.service.models.StoredFile;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,6 +38,7 @@ import java.io.InputStream;
 import java.util.Set;
 import java.util.UUID;
 
+@Tag(name = "Storage Service")
 @RestController
 @Slf4j
 @Validated
@@ -45,6 +50,15 @@ public class FileController {
         this.fileService = fileService;
     }
 
+    @Operation(
+            summary = "Upload file to storage as raw binary stream",
+            requestBody = @RequestBody(
+                    content = @Content(
+                            mediaType = "application/octet-stream",
+                            schema = @Schema(type = "string", format = "binary")
+                    )
+            )
+    )
     @PostMapping("/upload")
     public ResponseEntity<FileMetadataDto> uploadFile(
             HttpServletRequest request,
@@ -66,7 +80,8 @@ public class FileController {
         return ResponseEntity.ok(fileMetadataDto);
     }
 
-    @GetMapping("/")
+    @Operation(summary = "List all public files")
+    @GetMapping("/public")
     public ResponseEntity<Page<FileMetadataDto>> listPublicFiles(
             @RequestParam(required = true) String userId,
             @RequestParam(defaultValue = "") Set<String> tags,
@@ -82,6 +97,7 @@ public class FileController {
         return ResponseEntity.ok(pageOfFiles);
     }
 
+    @Operation(summary = "List all files uploaded by user")
     @GetMapping("/my")
     public ResponseEntity<Page<FileMetadataDto>> listUserFiles(
             @RequestParam(required = true) String userId,
@@ -98,6 +114,7 @@ public class FileController {
         return ResponseEntity.ok(pageOfFiles);
     }
 
+    @Operation(summary = "Download file from storage")
     @GetMapping("/{fileId}")
     public ResponseEntity<StreamingResponseBody> downloadFile(
             @PathVariable UUID fileId,
@@ -128,6 +145,7 @@ public class FileController {
                 .body(responseBody);
     }
 
+    @Operation(summary = "Delete file from storage")
     @DeleteMapping("/{fileId}")
     public ResponseEntity<Void> deleteFile(
             @PathVariable UUID fileId,
@@ -138,6 +156,7 @@ public class FileController {
     }
 
 
+    @Operation(summary = "Rename file")
     @PatchMapping("/{fileId}")
     public ResponseEntity<FileMetadataDto> renameFile(
             @PathVariable UUID fileId,
