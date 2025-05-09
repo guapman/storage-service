@@ -28,4 +28,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Docker build
-      - run: docker build . -t storage-service:latest
+        run: docker build . -t storage-service:latest
