@@ -149,7 +149,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public void deleteFile(String userId, UUID fileId) throws StorageException {
-        FileMetadata metadata = getFileMetadataWithAccessCheck(userId, fileId);
+        FileMetadata metadata = getFileMetadataWithAccessCheck(userId, fileId, false);
 
         try {
             minioClient.removeObject(
@@ -167,7 +167,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileMetadataDto renameFile(String userId, UUID fileId, String newFilename) throws StorageException {
-        FileMetadata metadata = getFileMetadataWithAccessCheck(userId, fileId);
+        FileMetadata metadata = getFileMetadataWithAccessCheck(userId, fileId, false);
 
         if(!metadata.getFilename().equals(newFilename)) {
             metadata.setFilename(newFilename);
@@ -184,7 +184,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public StoredFile getFile(String userId, UUID fileId) throws StorageException {
-        FileMetadata metadata = getFileMetadataWithAccessCheck(userId, fileId);
+        FileMetadata metadata = getFileMetadataWithAccessCheck(userId, fileId, true);
 
         GetObjectArgs args = GetObjectArgs.builder()
                 .bucket(bucketName)
@@ -257,14 +257,20 @@ public class FileServiceImpl implements FileService {
         return DEFAULT_TYPE;
     }
 
-    private FileMetadata getFileMetadataWithAccessCheck(String userId, UUID fileId) throws StorageException {
+    private FileMetadata getFileMetadataWithAccessCheck(
+            String userId, UUID fileId, Boolean doNotCheckAccessIfPublic) throws StorageException {
         FileMetadata fileMetadata = fileRepository.findByExternalId(fileId)
                 .orElseThrow(() -> new FileNotFoundException(fileId));
 
-        if(!fileMetadata.getOwnerId().equals(userId)) {
+        if(doNotCheckAccessIfPublic && fileMetadata.getVisibility() == Visibility.PUBLIC) {
+            return fileMetadata;
+        }
+
+        if (!fileMetadata.getOwnerId().equals(userId)) {
             log.warn("attempt of unauthorized access to file {}, user {}", fileId.toString(), userId);
             throw new AccessDeniedException();
         }
+
         return fileMetadata;
     }
 }
