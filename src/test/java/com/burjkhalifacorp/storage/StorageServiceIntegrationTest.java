@@ -70,7 +70,7 @@ public class StorageServiceIntegrationTest extends TestBase {
 
         final String fileName = "huge_file.dat";
 
-        HttpRequest request = mkFileUploadRequest(userId1, fileName, size, random.nextInt(256));
+        HttpRequest request = mkFileUploadRequest(userId1, fileName, size, (byte) random.nextInt(256));
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
@@ -92,13 +92,13 @@ public class StorageServiceIntegrationTest extends TestBase {
         assertEquals(1, results.filter(Boolean::booleanValue).count());
     }
 
-    @Test
+    @RepeatedTest(4)
     void testDownloadFile() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final long size = random.nextLong(8192) + 2048;
         final String fileName = "file_for_download.dat";
 
-        final int byteContent = random.nextInt(256);
+        final byte byteContent = (byte) random.nextInt(256);
         HttpRequest request = mkFileUploadRequest(userId1, fileName, size, byteContent);
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
@@ -109,10 +109,11 @@ public class StorageServiceIntegrationTest extends TestBase {
         HttpRequest requestDownload = mkFileDownloadRequest(userId1, metadata.getId());
         HttpResponse<byte[]> responseDownload = client.send(requestDownload, HttpResponse.BodyHandlers.ofByteArray());
 
+        assertEquals(200, responseDownload.statusCode());
         byte [] dataDownloaded = responseDownload.body();
         assertEquals(size, dataDownloaded.length);
-        for(byte b : dataDownloaded) {
-            assertEquals(byteContent, b);
+        for(int i = 0; i < dataDownloaded.length; ++i) {
+            assertEquals(byteContent, dataDownloaded[i]);
         }
     }
 
@@ -122,7 +123,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         final long size = random.nextLong(8192) + 2048;
         final String fileName = "file_for_deletion.dat";
 
-        final int byteContent = random.nextInt(256);
+        final byte byteContent = (byte) random.nextInt(256);
         HttpRequest request = mkFileUploadRequest(userId1, fileName, size, byteContent);
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
@@ -133,7 +134,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         HttpRequest requestDelete = mkFileDeleteRequest(hackerId, metadata.getId());
         HttpResponse<String> responseDelete = client.send(requestDelete, HttpResponse.BodyHandlers.ofString());
 
-        assertEquals(HttpStatus.FORBIDDEN.value(), responseDelete.statusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), responseDelete.statusCode());
         ErrorResponse errorResponse = objectMapper.readValue(responseDelete.body(), ErrorResponse.class);
         assertFalse(errorResponse.getError().isEmpty());
     }
@@ -178,7 +179,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         final String filename = "file_to_rename.dat";
         final String filenameNew = "file_new_name.zip";
 
-        HttpRequest request = mkFileUploadRequest(userId1, filename, size, random.nextInt(256));
+        HttpRequest request = mkFileUploadRequest(userId1, filename, size, (byte) random.nextInt(256));
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
@@ -195,7 +196,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         return URI.create("http://localhost:" + port + "/api/v1/files" + path);
     }
 
-    private HttpRequest mkFileUploadRequest(String userId, String filename, long contentSize, int content) {
+    private HttpRequest mkFileUploadRequest(String userId, String filename, long contentSize, byte content) {
         InputStream fakeFileStream = new InputStream() {
             private long bytesLeft = contentSize;
             @Override
@@ -246,7 +247,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         List<Future<Boolean>> futuresList = new ArrayList<>();
         for(int i = 0; i < parallelNum; ++i) {
             final String filename = sameName ? "file_same_name.dat" : "file_%d.dat".formatted(i);
-            final int content = sameContent ? 0x55 : i;
+            final byte content = sameContent ? 0x55 : (byte) i;
 
             Callable<Boolean> uploadTask = () -> {
                 HttpClient client = HttpClient.newHttpClient();

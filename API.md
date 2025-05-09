@@ -1,8 +1,28 @@
+---
+title: Storage Service API v1
+language_tabs:
+  - http: HTTP
+toc_footers: []
+includes: []
+search: false
+highlight_theme: darkula
+headingLevel: 2
+
+---
+
+<!-- Generator: Widdershins v4.0.1 -->
+
+<h1 id="storage-service-api">Storage Service API v1</h1>
+
+> Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
+
+API v1 docs
+
 Base URLs:
 
 * <a href="http://127.0.0.1:8080">http://127.0.0.1:8080</a>
 
-<h1 id="openapi-definition-storage-service">Storage Service</h1>
+<h1 id="storage-service-api-storage-service">Storage Service</h1>
 
 ## uploadFile
 
@@ -10,11 +30,11 @@ Base URLs:
 
 > Code samples
 
-```shell
-# You can also use wget
-curl -X POST http://127.0.0.1:8080/api/v1/files/upload?userId=string&filename=string&visibility=PRIVATE \
-  -H 'Content-Type: application/octet-stream' \
-  -H 'Accept: */*'
+```http
+POST http://127.0.0.1:8080/api/v1/files/upload?userId=string&filename=string&visibility=PRIVATE HTTP/1.1
+Host: 127.0.0.1:8080
+Content-Type: application/octet-stream
+Accept: */*
 
 ```
 
@@ -50,11 +70,22 @@ string
 
 > 200 Response
 
+> default Response
+
+```json
+{
+  "error": "Access denied | File duplicated ...",
+  "details": "Extended description of error",
+  "status": 400
+}
+```
+
 <h3 id="uploadfile-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|[FileMetadataDto](#schemafilemetadatadto)|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Success|[FileMetadataDto](#schemafilemetadatadto)|
+|default|Default|API Error|[ErrorResponse](#schemaerrorresponse)|
 
 <aside class="success">
 This operation does not require authentication
@@ -66,10 +97,10 @@ This operation does not require authentication
 
 > Code samples
 
-```shell
-# You can also use wget
-curl -X GET http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string \
-  -H 'Accept: */*'
+```http
+GET http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string HTTP/1.1
+Host: 127.0.0.1:8080
+Accept: */*
 
 ```
 
@@ -88,11 +119,22 @@ curl -X GET http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string \
 
 > 200 Response
 
+> default Response
+
+```json
+{
+  "error": "Access denied | File duplicated ...",
+  "details": "Extended description of error",
+  "status": 400
+}
+```
+
 <h3 id="downloadfile-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|[StreamingResponseBody](#schemastreamingresponsebody)|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Success|[StreamingResponseBody](#schemastreamingresponsebody)|
+|default|Default|API Error|[ErrorResponse](#schemaerrorresponse)|
 
 <aside class="success">
 This operation does not require authentication
@@ -104,9 +146,10 @@ This operation does not require authentication
 
 > Code samples
 
-```shell
-# You can also use wget
-curl -X DELETE http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string
+```http
+DELETE http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string HTTP/1.1
+Host: 127.0.0.1:8080
+Accept: application/json
 
 ```
 
@@ -121,11 +164,24 @@ curl -X DELETE http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string
 |fileId|path|string(uuid)|true|none|
 |userId|query|string|true|none|
 
+> Example responses
+
+> default Response
+
+```json
+{
+  "error": "Access denied | File duplicated ...",
+  "details": "Extended description of error",
+  "status": 400
+}
+```
+
 <h3 id="deletefile-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|None|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Success|None|
+|default|Default|API Error|[ErrorResponse](#schemaerrorresponse)|
 
 <aside class="success">
 This operation does not require authentication
@@ -137,10 +193,10 @@ This operation does not require authentication
 
 > Code samples
 
-```shell
-# You can also use wget
-curl -X PATCH http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string&filename=string \
-  -H 'Accept: */*'
+```http
+PATCH http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string&filename=string HTTP/1.1
+Host: 127.0.0.1:8080
+Accept: */*
 
 ```
 
@@ -160,11 +216,22 @@ curl -X PATCH http://127.0.0.1:8080/api/v1/files/{fileId}?userId=string&filename
 
 > 200 Response
 
+> default Response
+
+```json
+{
+  "error": "Access denied | File duplicated ...",
+  "details": "Extended description of error",
+  "status": 400
+}
+```
+
 <h3 id="renamefile-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|[FileMetadataDto](#schemafilemetadatadto)|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Success|[FileMetadataDto](#schemafilemetadatadto)|
+|default|Default|API Error|[ErrorResponse](#schemaerrorresponse)|
 
 <aside class="success">
 This operation does not require authentication
@@ -176,10 +243,10 @@ This operation does not require authentication
 
 > Code samples
 
-```shell
-# You can also use wget
-curl -X GET http://127.0.0.1:8080/api/v1/files/public?userId=string \
-  -H 'Accept: */*'
+```http
+GET http://127.0.0.1:8080/api/v1/files/public?userId=string HTTP/1.1
+Host: 127.0.0.1:8080
+Accept: */*
 
 ```
 
@@ -212,11 +279,22 @@ curl -X GET http://127.0.0.1:8080/api/v1/files/public?userId=string \
 
 > 200 Response
 
+> default Response
+
+```json
+{
+  "error": "Access denied | File duplicated ...",
+  "details": "Extended description of error",
+  "status": 400
+}
+```
+
 <h3 id="listpublicfiles-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|[PagedModel](#schemapagedmodel)|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Success|[PagedModel](#schemapagedmodel)|
+|default|Default|API Error|[ErrorResponse](#schemaerrorresponse)|
 
 <aside class="success">
 This operation does not require authentication
@@ -228,10 +306,10 @@ This operation does not require authentication
 
 > Code samples
 
-```shell
-# You can also use wget
-curl -X GET http://127.0.0.1:8080/api/v1/files/my?userId=string \
-  -H 'Accept: */*'
+```http
+GET http://127.0.0.1:8080/api/v1/files/my?userId=string HTTP/1.1
+Host: 127.0.0.1:8080
+Accept: */*
 
 ```
 
@@ -264,17 +342,54 @@ curl -X GET http://127.0.0.1:8080/api/v1/files/my?userId=string \
 
 > 200 Response
 
+> default Response
+
+```json
+{
+  "error": "Access denied | File duplicated ...",
+  "details": "Extended description of error",
+  "status": 400
+}
+```
+
 <h3 id="listuserfiles-responses">Responses</h3>
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|[PagedModel](#schemapagedmodel)|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Success|[PagedModel](#schemapagedmodel)|
+|default|Default|API Error|[ErrorResponse](#schemaerrorresponse)|
 
 <aside class="success">
 This operation does not require authentication
 </aside>
 
 # Schemas
+
+<h2 id="tocS_ErrorResponse">ErrorResponse</h2>
+<!-- backwards compatibility -->
+<a id="schemaerrorresponse"></a>
+<a id="schema_ErrorResponse"></a>
+<a id="tocSerrorresponse"></a>
+<a id="tocserrorresponse"></a>
+
+```json
+{
+  "error": "Access denied | File duplicated ...",
+  "details": "Extended description of error",
+  "status": 400
+}
+
+```
+
+API error response
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error|string|false|none|Error message|
+|details|string|false|none|Error details|
+|status|integer(int32)|false|none|HTTP status code|
 
 <h2 id="tocS_FileMetadataDto">FileMetadataDto</h2>
 <!-- backwards compatibility -->
@@ -387,3 +502,4 @@ This operation does not require authentication
 |---|---|---|---|---|
 |content|[object]|false|none|none|
 |page|[PageMetadata](#schemapagemetadata)|false|none|none|
+

@@ -4,6 +4,6 @@ import org.springframework.http.HttpStatus;
 
 public class AccessDeniedException extends StorageException {
     public AccessDeniedException() {
-        super("Access denied", HttpStatus.FORBIDDEN);
+        super("Access denied", HttpStatus.UNAUTHORIZED);
     }
 }

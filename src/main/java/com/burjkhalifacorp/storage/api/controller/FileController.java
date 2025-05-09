@@ -1,4 +1,5 @@
 package com.burjkhalifacorp.storage.api.controller;
+import com.burjkhalifacorp.storage.api.models.ErrorResponse;
 import com.burjkhalifacorp.storage.api.models.FileMetadataDto;
 import com.burjkhalifacorp.storage.api.models.FileSortBy;
 
@@ -11,9 +12,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -57,14 +60,21 @@ public class FileController {
                             mediaType = "application/octet-stream",
                             schema = @Schema(type = "string", format = "binary")
                     )
-            )
-    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(
+                            description = "API Error",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            })
     @PostMapping("/upload")
     public ResponseEntity<FileMetadataDto> uploadFile(
             HttpServletRequest request,
-            @RequestParam(required = true) String userId,
-            @RequestParam(required = true) String filename,
-            @RequestParam(required = true) Visibility visibility,
+            @RequestParam @NotBlank String userId,
+            @RequestParam @NotBlank String filename,
+            @RequestParam Visibility visibility,
             @Size(max = AppConstants.MAX_TAGS, message = "Max {max} tags allowed")
             @RequestParam(defaultValue = "") Set<String> tags
     ) throws IOException {
@@ -80,10 +90,19 @@ public class FileController {
         return ResponseEntity.ok(fileMetadataDto);
     }
 
-    @Operation(summary = "List all public files")
+    @Operation(
+            summary = "List all public files",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(
+                            description = "API Error",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            })
     @GetMapping("/public")
     public ResponseEntity<Page<FileMetadataDto>> listPublicFiles(
-            @RequestParam(required = true) String userId,
+            @RequestParam @NotBlank String userId,
             @RequestParam(defaultValue = "") Set<String> tags,
             @RequestParam(defaultValue = "0") int page,
             @Max(value = AppConstants.MAX_FILES_PAGE_SIZE, message = "Max {value} page size allowed")
@@ -97,10 +116,19 @@ public class FileController {
         return ResponseEntity.ok(pageOfFiles);
     }
 
-    @Operation(summary = "List all files uploaded by user")
+    @Operation(
+            summary = "List all files uploaded by user",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(
+                            description = "API Error",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            })
     @GetMapping("/my")
     public ResponseEntity<Page<FileMetadataDto>> listUserFiles(
-            @RequestParam(required = true) String userId,
+            @RequestParam @NotBlank String userId,
             @RequestParam(defaultValue = "") Set<String> tags,
             @RequestParam(defaultValue = "0") int page,
             @Max(value = AppConstants.MAX_FILES_PAGE_SIZE, message = "Max {value} page size allowed")
@@ -114,11 +142,20 @@ public class FileController {
         return ResponseEntity.ok(pageOfFiles);
     }
 
-    @Operation(summary = "Download file from storage")
+    @Operation(
+            summary = "Download file from storage",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(
+                            description = "API Error",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            })
     @GetMapping("/{fileId}")
     public ResponseEntity<StreamingResponseBody> downloadFile(
             @PathVariable UUID fileId,
-            @RequestParam(required = true) String userId
+            @RequestParam @NotBlank String userId
     ) {
         final StoredFile storedFile = fileService.getFile(userId, fileId);
 
@@ -145,23 +182,41 @@ public class FileController {
                 .body(responseBody);
     }
 
-    @Operation(summary = "Delete file from storage")
+    @Operation(
+            summary = "Delete file from storage",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(
+                            description = "API Error",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            })
     @DeleteMapping("/{fileId}")
     public ResponseEntity<Void> deleteFile(
             @PathVariable UUID fileId,
-            @RequestParam(required = true) String userId
+            @RequestParam @NotBlank String userId
     ) {
         fileService.deleteFile(userId, fileId);
         return ResponseEntity.ok().build();
     }
 
 
-    @Operation(summary = "Rename file")
+    @Operation(
+            summary = "Rename file",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(
+                            description = "API Error",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            })
     @PatchMapping("/{fileId}")
     public ResponseEntity<FileMetadataDto> renameFile(
             @PathVariable UUID fileId,
-            @RequestParam(required = true) String userId,
-            @RequestParam(required = true) String filename
+            @RequestParam @NotBlank String userId,
+            @RequestParam @NotBlank String filename
     ) {
         FileMetadataDto updateMetadata = fileService.renameFile(userId, fileId, filename);
         return ResponseEntity.ok(updateMetadata);
