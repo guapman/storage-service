@@ -21,7 +21,7 @@ class StorageApplicationTests {
 	private FileMetadataRepository repositoryMock;
 
 	@Test
-	void contextLoads() {
+	void shouldLoadContext() {
 	}
 
 }

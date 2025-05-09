@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
@@ -104,8 +105,8 @@ public class FileController {
     public ResponseEntity<Page<FileMetadataDto>> listPublicFiles(
             @RequestParam @NotBlank String userId,
             @RequestParam(defaultValue = "") Set<String> tags,
-            @RequestParam(defaultValue = "0") int page,
-            @Max(value = AppConstants.MAX_FILES_PAGE_SIZE, message = "Max {value} page size allowed")
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Min(1) @Max(value = AppConstants.MAX_FILES_PAGE_SIZE, message = "Max {value} page size allowed")
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "UPLOAD_DATE") FileSortBy sortBy,
             @RequestParam(defaultValue = "true") boolean ascending
@@ -130,8 +131,8 @@ public class FileController {
     public ResponseEntity<Page<FileMetadataDto>> listUserFiles(
             @RequestParam @NotBlank String userId,
             @RequestParam(defaultValue = "") Set<String> tags,
-            @RequestParam(defaultValue = "0") int page,
-            @Max(value = AppConstants.MAX_FILES_PAGE_SIZE, message = "Max {value} page size allowed")
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Min(1) @Max(value = AppConstants.MAX_FILES_PAGE_SIZE, message = "Max {value} page size allowed")
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "UPLOAD_DATE") FileSortBy sortBy,
             @RequestParam(defaultValue = "true") boolean ascending
@@ -168,7 +169,7 @@ public class FileController {
                     outputStream.write(buffer, 0, byteCount);
                 }
             } catch (Exception ex) {
-                log.error("error occured during download: {}", ex);
+                log.error("error occurred during download: {}", ex);
                 throw ex;
             }
         };

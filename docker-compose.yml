@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:5.0
+    image: mongo:4.4
     container_name: st_mongodb
     ports:
       - $STORAGE_MONGO_PORT:27017

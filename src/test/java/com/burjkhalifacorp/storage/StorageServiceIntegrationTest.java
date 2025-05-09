@@ -15,9 +15,6 @@ import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
@@ -41,9 +38,6 @@ public class StorageServiceIntegrationTest extends TestBase {
     @LocalServerPort
     private int port;
 
-    private ObjectMapper objectMapper;
-    private Random random = new Random();
-
     @Container
     private static ComposeContainer env = new ComposeContainer(new File("docker-compose-tests.yml"))
             .withExposedService("mongo", 27017, Wait.forListeningPort())
@@ -57,14 +51,8 @@ public class StorageServiceIntegrationTest extends TestBase {
     @Autowired
     private FileMetadataRepository repository;
 
-    public StorageServiceIntegrationTest() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-    }
-
-
     @Test
-    void testUploadHugeFile() throws Exception {
+    void shouldBeAbleUpload2GbFile() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final long size = 2L * 1024 * 1024 * 1024;
 
@@ -79,21 +67,21 @@ public class StorageServiceIntegrationTest extends TestBase {
     }
 
     @Test
-    void testParallelUploadWithSameName() throws Exception {
+    void shouldCreateSingleFileWhenParallelUploadsWithSameName() throws Exception {
         final int PARALLEL_NUM = 20;
         Stream<Boolean> results = runParallelUploads(userId1, PARALLEL_NUM, true, false);
         assertEquals(1, results.filter(Boolean::booleanValue).count());
     }
 
     @Test
-    void testParallelUploadWithSameContent() throws Exception {
+    void shouldCreateSingleFileWhenParallelUploadsWithSameContent() throws Exception {
         final int PARALLEL_NUM = 20;
         Stream<Boolean> results = runParallelUploads(userId1, PARALLEL_NUM, false, true);
         assertEquals(1, results.filter(Boolean::booleanValue).count());
     }
 
     @RepeatedTest(4)
-    void testDownloadFile() throws Exception {
+    void shouldBeAbleToDownloadFile() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final long size = random.nextLong(8192) + 2048;
         final String fileName = "file_for_download.dat";
@@ -118,7 +106,7 @@ public class StorageServiceIntegrationTest extends TestBase {
     }
 
     @Test
-    void testDeleteOtherUserFile() throws Exception {
+    void shouldReturnErrorWhenDeleteOtherUserFile() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final long size = random.nextLong(8192) + 2048;
         final String fileName = "file_for_deletion.dat";
@@ -140,7 +128,7 @@ public class StorageServiceIntegrationTest extends TestBase {
     }
 
     @Test
-    void testListPublicFiles() throws Exception {
+    void shouldBeAbleListPublicFiles() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final int FILES_NUM = 10;
         final long size = random.nextLong(8192) + 2048;
@@ -156,7 +144,7 @@ public class StorageServiceIntegrationTest extends TestBase {
     }
 
     @Test
-    void testListUserFiles() throws Exception {
+    void shouldBeAbleListUserFiles() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final int FILES_NUM = 10;
         final long size = random.nextLong(8192) + 2048;
@@ -172,7 +160,7 @@ public class StorageServiceIntegrationTest extends TestBase {
     }
 
     @Test
-    void testRenameFiles() throws Exception {
+    void shouldBeAbleRenameFiles() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final int FILES_NUM = 10;
         final long size = random.nextLong(8192) + 2048;

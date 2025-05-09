@@ -1,7 +1,7 @@
-package com.burjkhalifacorp.storage;
+package com.burjkhalifacorp.storage.persist;
 
+import com.burjkhalifacorp.storage.TestBase;
 import com.burjkhalifacorp.storage.common.Visibility;
-import com.burjkhalifacorp.storage.persist.FileMetadataRepository;
 import com.burjkhalifacorp.storage.persist.models.FileMetadata;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,7 @@ public class FileMetadataRepositoryTest extends TestBase {
     }
 
     @Test
-    void testSaveAndFindByOwnerId() {
+    void shouldSaveAndFindFilesByOwnerId() {
         FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PRIVATE, tags1);
         FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
         FileMetadata file3 = mkRandomFileMetadata(userId2, Visibility.PUBLIC, tags1);
@@ -64,7 +64,7 @@ public class FileMetadataRepositoryTest extends TestBase {
     }
 
     @Test
-    void testSaveAndFindPublic() {
+    void shouldSaveAndFindPublicFiles() {
         FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags1);
         FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
         FileMetadata file3 = mkRandomFileMetadata(userId2, Visibility.PUBLIC, tags1);
@@ -93,7 +93,7 @@ public class FileMetadataRepositoryTest extends TestBase {
     }
 
     @Test
-    void testSaveSameName() {
+    void shouldThrowErrorWhenSaveSameName() {
         FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags1);
         FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
         // another user
@@ -112,7 +112,7 @@ public class FileMetadataRepositoryTest extends TestBase {
     }
 
     @Test
-    void testSaveSameHash() {
+    void shouldThrowErrorWhenSaveSameHash() {
         FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags1);
         FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, tags2);
         // another user
@@ -131,7 +131,7 @@ public class FileMetadataRepositoryTest extends TestBase {
     }
 
     @Test
-    void testTagSorting() {
+    void shouldSortByTag() {
         FileMetadata file1 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, Set.of("tag_1", "tag_3"));
         FileMetadata file2 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, Set.of("tag_2"));
         FileMetadata file3 = mkRandomFileMetadata(userId1, Visibility.PUBLIC, Set.of("tag_3", "tag_1"));

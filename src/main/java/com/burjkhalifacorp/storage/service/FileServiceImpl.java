@@ -209,7 +209,7 @@ public class FileServiceImpl implements FileService {
         } else {
             result = fileRepository.findAllPublicFiles(pageable);
         }
-        return result.map(m -> fileMetadataMapper.toDto(m));
+        return result.map(fileMetadataMapper::toDto);
     }
 
     @Override
@@ -221,7 +221,7 @@ public class FileServiceImpl implements FileService {
         } else {
             result = fileRepository.findByOwnerId(userId, pageable);
         }
-        return result.map(m -> fileMetadataMapper.toDto(m));
+        return result.map(fileMetadataMapper::toDto);
     }
 
     private Set<String> normalizeAndValidateTags(Set<String> tags) throws StorageException {

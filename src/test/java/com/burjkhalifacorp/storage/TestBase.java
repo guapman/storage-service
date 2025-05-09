@@ -2,6 +2,8 @@ package com.burjkhalifacorp.storage;
 
 import com.burjkhalifacorp.storage.common.Visibility;
 import com.burjkhalifacorp.storage.persist.models.FileMetadata;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -20,6 +22,13 @@ public abstract class TestBase {
     protected final Set<String> tags1 = Set.of("scuba", "ocean", "movie");
     protected final Set<String> tags2 = Set.of("photo");
 
+    protected ObjectMapper objectMapper;
+    protected Random random = new Random();
+
+    protected TestBase() {
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+    }
 
     protected FileMetadata mkRandomFileMetadata(
             String ownerId,
