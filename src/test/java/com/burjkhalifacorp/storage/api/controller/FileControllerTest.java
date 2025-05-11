@@ -3,6 +3,7 @@ package com.burjkhalifacorp.storage.api.controller;
 import com.burjkhalifacorp.storage.TestBase;
 import com.burjkhalifacorp.storage.api.models.FileMetadataDto;
 import com.burjkhalifacorp.storage.common.Visibility;
+import com.burjkhalifacorp.storage.config.DownloadConfig;
 import com.burjkhalifacorp.storage.mappers.FileMetadataMapper;
 import com.burjkhalifacorp.storage.persist.models.FileMetadata;
 import com.burjkhalifacorp.storage.service.FileService;
@@ -32,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = FileController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(FileMetadataMapper.class)
+@Import({FileMetadataMapper.class, DownloadConfig.class})
 public class FileControllerTest extends TestBase {
 
     @Autowired

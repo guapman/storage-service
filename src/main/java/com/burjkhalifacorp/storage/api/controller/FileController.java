@@ -20,12 +20,15 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,6 +44,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 @Tag(name = "Storage Service")
 @RestController
@@ -49,6 +55,10 @@ import java.util.UUID;
 @RequestMapping("/api/v1/files")
 public class FileController {
     private final FileService fileService;
+
+    @Autowired
+    @Qualifier("downloadsExecutor")
+    private Executor downloadsExecutor;
 
     public FileController(FileService fileService) {
         this.fileService = fileService;
@@ -153,34 +163,39 @@ public class FileController {
                                     schema = @Schema(implementation = ErrorResponse.class))
                     )
             })
+    @Async
     @GetMapping("/{fileId}")
-    public ResponseEntity<StreamingResponseBody> downloadFile(
+    public CompletableFuture<ResponseEntity<StreamingResponseBody>> downloadFile(
             @PathVariable UUID fileId,
             @RequestParam @NotBlank String userId
     ) {
-        final StoredFile storedFile = fileService.getFile(userId, fileId);
-
-        StreamingResponseBody responseBody = outputStream -> {
-            try(InputStream fileStream = storedFile.getInputStream()) {
-                final int BUFFER_SIZE = 16 * 1024;
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int byteCount;
-                while ((byteCount = fileStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, byteCount);
+        Supplier<ResponseEntity<StreamingResponseBody>> downloadTask = () -> {
+            log.info("processing download request from user {}, file {}, thread {}", userId, fileId, Thread.currentThread().getName());
+            final StoredFile storedFile = fileService.getFile(userId, fileId);
+            StreamingResponseBody responseBody = outputStream -> {
+                try (InputStream fileStream = storedFile.getInputStream()) {
+                    final int BUFFER_SIZE = 16 * 1024;
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int byteCount;
+                    while ((byteCount = fileStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, byteCount);
+                    }
+                } catch (Exception ex) {
+                    log.error("error occurred during download: {}", ex);
+                    throw ex;
                 }
-            } catch (Exception ex) {
-                log.error("error occurred during download: {}", ex);
-                throw ex;
-            }
-        };
+            };
 
-        FileMetadataDto fileMetadataDto = storedFile.getMetadata();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=" + fileMetadataDto.getFilename())
-                .header(HttpHeaders.CONTENT_TYPE, fileMetadataDto.getContentType())
-                .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(fileMetadataDto.getSize()))
-                .body(responseBody);
+            FileMetadataDto fileMetadataDto = storedFile.getMetadata();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=" + fileMetadataDto.getFilename())
+                    .header(HttpHeaders.CONTENT_TYPE, fileMetadataDto.getContentType())
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(fileMetadataDto.getSize()))
+                    .body(responseBody);
+        };
+        return CompletableFuture.supplyAsync(downloadTask, downloadsExecutor);
     }
 
     @Operation(

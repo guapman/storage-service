@@ -80,7 +80,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         assertEquals(1, results.filter(Boolean::booleanValue).count());
     }
 
-    @RepeatedTest(4)
+    @RepeatedTest(5)
     void shouldBeAbleToDownloadFile() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         final long size = random.nextLong(8192) + 2048;

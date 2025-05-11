@@ -21,3 +21,9 @@ minio:
   access-key: minio_user
   secret-key: minio_password
   bucket: storage-files
+
+downloads:
+  core-pool-size: 2
+  max-pool-size: 20
+  queue-capacity: 200
+
