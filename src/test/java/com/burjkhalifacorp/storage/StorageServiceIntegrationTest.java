@@ -2,6 +2,7 @@ package com.burjkhalifacorp.storage;
 
 import com.burjkhalifacorp.storage.api.models.ErrorResponse;
 import com.burjkhalifacorp.storage.api.models.FileMetadataDto;
+import com.burjkhalifacorp.storage.common.Visibility;
 import com.burjkhalifacorp.storage.persist.FileMetadataRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.*;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.util.UriBuilder;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.containers.ComposeContainer;
@@ -56,9 +59,9 @@ public class StorageServiceIntegrationTest extends TestBase {
         HttpClient client = HttpClient.newHttpClient();
         final long size = 2L * 1024 * 1024 * 1024;
 
-        final String fileName = "huge_file.dat";
+        final String filename = "huge_file.dat";
 
-        HttpRequest request = mkFileUploadRequest(userId1, fileName, size, (byte) random.nextInt(256));
+        HttpRequest request = mkFileUploadRequest(userId1, filename, size, (byte) random.nextInt(256), null);
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
@@ -69,14 +72,14 @@ public class StorageServiceIntegrationTest extends TestBase {
     @Test
     void shouldCreateSingleFileWhenParallelUploadsWithSameName() throws Exception {
         final int PARALLEL_NUM = 20;
-        Stream<Boolean> results = runParallelUploads(userId1, PARALLEL_NUM, true, false);
+        Stream<Boolean> results = runParallelUploads(userId1, PARALLEL_NUM, true, false, null);
         assertEquals(1, results.filter(Boolean::booleanValue).count());
     }
 
     @Test
     void shouldCreateSingleFileWhenParallelUploadsWithSameContent() throws Exception {
         final int PARALLEL_NUM = 20;
-        Stream<Boolean> results = runParallelUploads(userId1, PARALLEL_NUM, false, true);
+        Stream<Boolean> results = runParallelUploads(userId1, PARALLEL_NUM, false, true, null);
         assertEquals(1, results.filter(Boolean::booleanValue).count());
     }
 
@@ -86,8 +89,9 @@ public class StorageServiceIntegrationTest extends TestBase {
         final long size = random.nextLong(8192) + 2048;
         final String fileName = "file_for_download.dat";
 
+
         final byte byteContent = (byte) random.nextInt(256);
-        HttpRequest request = mkFileUploadRequest(userId1, fileName, size, byteContent);
+        HttpRequest request = mkFileUploadRequest(userId1, fileName, size, byteContent, null);
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
@@ -112,7 +116,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         final String fileName = "file_for_deletion.dat";
 
         final byte byteContent = (byte) random.nextInt(256);
-        HttpRequest request = mkFileUploadRequest(userId1, fileName, size, byteContent);
+        HttpRequest request = mkFileUploadRequest(userId1, fileName, size, byteContent, null);
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
@@ -133,7 +137,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         final int FILES_NUM = 10;
         final long size = random.nextLong(8192) + 2048;
 
-        Stream<Boolean> results = runParallelUploads(userId1, FILES_NUM, false, false);
+        Stream<Boolean> results = runParallelUploads(userId1, FILES_NUM, false, false, null);
         assertEquals(FILES_NUM, results.filter(Boolean::booleanValue).count());
 
         HttpRequest request = mkFileListPublicRequest(userId1);
@@ -149,10 +153,13 @@ public class StorageServiceIntegrationTest extends TestBase {
         final int FILES_NUM = 10;
         final long size = random.nextLong(8192) + 2048;
 
-        Stream<Boolean> results = runParallelUploads(userId1, FILES_NUM, false, false);
+        final List<String> tagsOnUpload = List.of("taG1", "TaG2", "taggggg3");
+        final List<String> tagsForList = List.of("tag1", "tag2");
+
+        Stream<Boolean> results = runParallelUploads(userId1, FILES_NUM, false, false, tagsOnUpload);
         assertEquals(FILES_NUM, results.filter(Boolean::booleanValue).count());
 
-        HttpRequest request = mkFileListUserRequest(userId1);
+        HttpRequest request = mkFileListUserRequest(userId1, tagsForList);
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         JsonNode node = objectMapper.readTree(response.body());
@@ -167,7 +174,7 @@ public class StorageServiceIntegrationTest extends TestBase {
         final String filename = "file_to_rename.dat";
         final String filenameNew = "file_new_name.zip";
 
-        HttpRequest request = mkFileUploadRequest(userId1, filename, size, (byte) random.nextInt(256));
+        HttpRequest request = mkFileUploadRequest(userId1, filename, size, (byte) random.nextInt(256), null);
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
@@ -180,11 +187,14 @@ public class StorageServiceIntegrationTest extends TestBase {
         assertEquals(filenameNew, metadataAfterRename.getFilename());
     }
 
-    private URI getEndpointUri(String path) {
-        return URI.create("http://localhost:" + port + "/api/v1/files" + path);
+    private UriBuilder getEndpointUriBuilder() {
+        return new DefaultUriBuilderFactory(
+                "http://localhost:" + port + "/api/v1/files/").builder();
     }
 
-    private HttpRequest mkFileUploadRequest(String userId, String filename, long contentSize, byte content) {
+    private HttpRequest mkFileUploadRequest(
+            String userId, String filename, long contentSize, byte content, List<String> tags
+    ) {
         InputStream fakeFileStream = new InputStream() {
             private long bytesLeft = contentSize;
             @Override
@@ -193,44 +203,66 @@ public class StorageServiceIntegrationTest extends TestBase {
                 return content;
             }
         };
+
+        URI uri = getEndpointUriBuilder().path("upload")
+                .queryParam("userId", userId)
+                .queryParam("filename", filename)
+                .queryParam("visibility", Visibility.PUBLIC)
+                .queryParam("tags", tags).build();
+
+        String s = uri.toString();
         return HttpRequest.newBuilder()
-                .uri(getEndpointUri("/upload?userId=%s&filename=%s&visibility=PUBLIC".formatted(userId, filename)))
+                .uri(uri)
                 .header("Content-Type", "application/octet-stream")
                 .POST(HttpRequest.BodyPublishers.ofInputStream(() -> fakeFileStream))
                 .build();
     }
 
     private HttpRequest mkFileDownloadRequest(String userId, UUID fileId) {
+        URI uri = getEndpointUriBuilder().path(fileId.toString())
+                .queryParam("userId", userId).build();
         return HttpRequest.newBuilder()
-                .uri(getEndpointUri("/%s?userId=%s".formatted(fileId.toString(), userId)))
+                .uri(uri)
                 .GET().build();
     }
 
     private HttpRequest mkFileDeleteRequest(String userId, UUID fileId) {
+        URI uri = getEndpointUriBuilder().path(fileId.toString())
+                .queryParam("userId", userId).build();
         return HttpRequest.newBuilder()
-                .uri(getEndpointUri("/%s?userId=%s".formatted(fileId.toString(), userId)))
+                .uri(uri)
                 .DELETE().build();
     }
 
     private HttpRequest mkFileListPublicRequest(String userId) {
+        URI uri = getEndpointUriBuilder().path("public")
+                .queryParam("userId", userId).build();
         return HttpRequest.newBuilder()
-                .uri(getEndpointUri("/public?userId=%s".formatted(userId)))
+                .uri(uri)
                 .GET().build();
     }
 
-    private HttpRequest mkFileListUserRequest(String userId) {
+    private HttpRequest mkFileListUserRequest(String userId, List<String> tags) {
+        URI uri = getEndpointUriBuilder().path("my")
+                .queryParam("userId", userId)
+                .queryParam("tags", tags).build();
         return HttpRequest.newBuilder()
-                .uri(getEndpointUri("/my?userId=%s".formatted(userId)))
+                .uri(uri)
                 .GET().build();
     }
 
-    private HttpRequest mkFileRenameRequest(String userId, UUID fileId, String newName) {
+    private HttpRequest mkFileRenameRequest(String userId, UUID fileId, String filename) {
+        URI uri = getEndpointUriBuilder().path(fileId.toString())
+                .queryParam("userId", userId)
+                .queryParam("filename", filename).build();
         return HttpRequest.newBuilder()
-                .uri(getEndpointUri("/%s?userId=%s&filename=%s".formatted(fileId.toString(), userId, newName)))
+                .uri(uri)
                 .method("PATCH", HttpRequest.BodyPublishers.noBody() ).build();
     }
 
-    Stream<Boolean> runParallelUploads(String userId, int parallelNum, boolean sameName, boolean sameContent) {
+    Stream<Boolean> runParallelUploads(
+            String userId, int parallelNum, boolean sameName, boolean sameContent, List<String> tags
+    ) {
         ExecutorService executorService = Executors.newFixedThreadPool(parallelNum);
         List<Future<Boolean>> futuresList = new ArrayList<>();
         for(int i = 0; i < parallelNum; ++i) {
@@ -239,7 +271,7 @@ public class StorageServiceIntegrationTest extends TestBase {
 
             Callable<Boolean> uploadTask = () -> {
                 HttpClient client = HttpClient.newHttpClient();
-                HttpRequest request = mkFileUploadRequest(userId, filename,512, content);
+                HttpRequest request = mkFileUploadRequest(userId, filename,512, content, tags);
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 return response.statusCode() == 200;
             };
