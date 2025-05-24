@@ -20,7 +20,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -56,12 +55,12 @@ import java.util.function.Supplier;
 public class FileController {
     private final FileService fileService;
 
-    @Autowired
-    @Qualifier("downloadsExecutor")
-    private Executor downloadsExecutor;
+    private final Executor downloadsExecutor;
 
-    public FileController(FileService fileService) {
+    public FileController(FileService fileService,
+                          @Qualifier("downloadsExecutor") Executor downloadsExecutor) {
         this.fileService = fileService;
+        this.downloadsExecutor = downloadsExecutor;
     }
 
     @Operation(

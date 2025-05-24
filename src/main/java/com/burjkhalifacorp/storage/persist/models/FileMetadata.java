@@ -19,6 +19,7 @@ import java.util.UUID;
 @Document(collection = "files_metadata")
 @CompoundIndex(name = "owner_id_filename_unique_idx", def = "{'ownerId': 1, 'filename': 1}", unique = true)
 @CompoundIndex(name = "owner_id_hash_unique_idx", def = "{'ownerId': 1, 'hash': 1}", unique = true)
+@CompoundIndex(name = "tags_visibility_idx", def = "{'tags': 1, 'visibility': 1}")
 @Data
 public class FileMetadata {
     @Id
